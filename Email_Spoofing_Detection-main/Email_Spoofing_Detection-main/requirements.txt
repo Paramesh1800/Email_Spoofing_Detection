@@ -1,0 +1,8 @@
+flask==3.0.2
+dnspython==2.6.1
+scikit-learn==1.6.1
+numpy==1.26.4
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+google-api-python-client==2.120.0
+dkimpy==1.1.5

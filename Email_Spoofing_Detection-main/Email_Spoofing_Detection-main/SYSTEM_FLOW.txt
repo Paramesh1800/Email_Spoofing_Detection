@@ -1,0 +1,54 @@
+Email Spoofing Detection System - Flow Diagram
+==========================================
+
+1. Training Phase
+----------------
+[Dataset] → [Preprocessing] → [Feature Extraction] → [Model Training] → [Save Model]
+                                     ↓                       ↓
+                              [TF-IDF Vectorizer]    [Random Forest]
+                                     ↓                       ↓
+                                [vectorizer.pkl]      [model.pkl]
+
+2. Application Flow
+------------------
+User → [Web Interface] → [Gmail OAuth] → [Email Analysis]
+                             ↓                ↓
+                      [Credentials.json] → [Gmail API]
+                                            ↓
+                                     [Fetch Emails]
+                                            ↓
+                               ┌────────────┴───────────┐
+                               ↓                        ↓
+                     [ML Analysis]           [Authentication Check]
+                          ↓                        ↓
+                   [Text Processing]        [SPF Verification]
+                          ↓                        ↓
+                    [Prediction]            [DMARC Check]
+                          ↓                        ↓
+                          └────────→ [Results] ←───┘
+                                        ↓
+                                 [Display to User]
+
+3. Security Flow
+---------------
+[User Request] → [OAuth Validation] → [Token Management]
+                       ↓                     ↓
+              [Consent Screen]        [Secure Storage]
+                       ↓                     ↓
+               [Access Grant]     [Periodic Refresh]
+
+4. Analysis Pipeline
+------------------
+Email → [Header Extraction] → [Content Extraction]
+         ↓                    ↓
+  [DNS Queries]        [Text Cleaning]
+         ↓                    ↓
+  [SPF Check]          [Vectorization]
+         ↓                    ↓
+  [DMARC Check]        [ML Prediction]
+         ↓                    ↓
+         └───→ [Score Combination] ←──┘
+                      ↓
+              [Warning Generation]
+                      ↓
+            [Results Presentation] 

@@ -1,0 +1,91 @@
+body {
+    padding: 2rem;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    border-radius: 15px 15px 0 0 !important;
+}
+
+.btn-primary {
+    padding: 12px 24px;
+    border-radius: 8px;
+}
+
+.loading {
+    display: none;
+}
+
+.email-card {
+    transition: all 0.3s ease;
+}
+
+.email-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+}
+
+.auth-info {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.received-chain {
+    font-family: monospace;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.confidence-bar {
+    height: 8px;
+    border-radius: 4px;
+}
+
+.details-section {
+    display: none;
+}
+
+.auth-result {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin: 0.25rem;
+    font-size: 0.8rem;
+}
+
+#errorAlert {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.no-emails-message {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}

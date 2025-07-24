@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Spoofing Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Error Alert -->
+    <div id="errorAlert" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Error!</strong> <span id="errorMessage"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="main-container">
+        <h1 class="text-center mb-4">📧 Email Spoofing Detection</h1>
+        
+        <!-- Gmail Authorization Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Gmail Authentication</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if authenticated %}
+                <div class="alert alert-success mb-4">
+                    <i class="fas fa-check-circle"></i> Connected to Gmail
+                </div>
+                <a href="/clear" class="btn btn-outline-danger">
+                    Disconnect Gmail Account
+                </a>
+                {% else %}
+                <p class="mb-4">Connect your Gmail account to analyze emails for potential spoofing.</p>
+                <a href="/authorize" class="btn btn-primary">
+                    <img src="https://www.google.com/gmail/about/static/images/logo-gmail.png" 
+                         alt="Gmail" height="20" class="me-2">
+                    Connect Gmail Account
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Email Analysis</h5>
+            </div>
+            <div class="card-body text-center">
+                <button id="analyzeBtn" class="btn btn-primary" {% if not authenticated %}disabled{% endif %}>
+                    <span class="spinner-border spinner-border-sm loading" role="status" aria-hidden="true"></span>
+                    Analyze Recent Emails
+                </button>
+                {% if not authenticated %}
+                <p class="text-muted mt-3">Please connect your Gmail account first</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsContainer">
+            <!-- Email cards will be dynamically added here -->
+        </div>
+    </div>
+
+    <!-- Email Card Template -->
+    <template id="emailCardTemplate">
+        <div class="card email-card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"></h6>
+                <span class="status-badge"></span>
+            </div>
+            <div class="card-body">
+                <div class="email-header mb-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p class="mb-2"><strong>From:</strong> <span class="from-field"></span></p>
+                            <p class="mb-2"><strong>Date:</strong> <span class="date-field"></span></p>
+                            <p class="mb-2"><strong>Subject:</strong> <span class="subject-field"></span></p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="auth-info">
+                                <p class="mb-1"><strong>SPF:</strong> <span class="spf-status"></span></p>
+                                <p class="mb-1"><strong>DMARC:</strong> <span class="dmarc-status"></span></p>
+                            </div>
+                            <div class="warning-flags mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary mb-3 email-toggle">
+                    Show Email Content
+                </button>
+                <div class="email-content" style="display: none;">
+                    <hr>
+                    <div class="email-body font-monospace bg-light p-3 rounded"></div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorAlert.style.display = 'block';
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+            }, 5000);
+        }
+
+        document.getElementById('analyzeBtn').addEventListener('click', async function() {
+            const button = this;
+            const loading = button.querySelector('.loading');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const template = document.getElementById('emailCardTemplate');
+
+            // Show loading state
+            loading.style.display = 'inline-block';
+            button.disabled = true;
+            resultsContainer.innerHTML = '';
+
+            try {
+                const response = await fetch('/analyze_emails');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to analyze emails');
+                }
+
+                if (!data.emails || !Array.isArray(data.emails)) {
+                    throw new Error('Invalid response format');
+                }
+
+                if (data.emails.length === 0) {
+                    resultsContainer.innerHTML = '<div class="no-emails-message">No emails found to analyze.</div>';
+                    return;
+                }
+
+                data.emails.forEach(email => {
+                    if (!email || email.error) {
+                        console.error('Error in email:', email);
+                        return;
+                    }
+
+                    const card = template.content.cloneNode(true);
+                    
+                    // Set basic information
+                    card.querySelector('h6').textContent = email.subject || '(No Subject)';
+                    card.querySelector('.from-field').textContent = email.from || 'Unknown';
+                    card.querySelector('.date-field').textContent = email.date || 'Unknown';
+                    card.querySelector('.subject-field').textContent = email.subject || '(No Subject)';
+                    
+                    // Set status badge
+                    const statusBadge = card.querySelector('.status-badge');
+                    statusBadge.textContent = email.is_spoofed ? 'Potentially Spoofed' : 'Legitimate';
+                    statusBadge.className = `status-badge badge ${email.is_spoofed ? 'bg-danger' : 'bg-success'}`;
+
+                    // Set authentication info
+                    const spfStatus = card.querySelector('.spf-status');
+                    const dmarcStatus = card.querySelector('.dmarc-status');
+                    
+                    spfStatus.textContent = email.spf_valid ? '✓ Valid' : '✗ Invalid';
+                    spfStatus.className = email.spf_valid ? 'text-success' : 'text-danger';
+                    
+                    dmarcStatus.textContent = email.dmarc_valid ? '✓ Valid' : '✗ Invalid';
+                    dmarcStatus.className = email.dmarc_valid ? 'text-success' : 'text-danger';
+
+                    // Add warning flags
+                    const warningFlags = card.querySelector('.warning-flags');
+                    if (email.warning_flags && email.warning_flags.length > 0) {
+                        const warningList = document.createElement('div');
+                        warningList.className = 'alert alert-warning p-2 mb-0';
+                        warningList.innerHTML = '<strong>Warnings:</strong><ul class="mb-0 ps-3">' +
+                            email.warning_flags.map(warning => `<li>${warning}</li>`).join('') +
+                            '</ul>';
+                        warningFlags.appendChild(warningList);
+                    }
+
+                    // Set email content
+                    const emailBody = card.querySelector('.email-body');
+                    emailBody.textContent = email.body || 'No content available';
+
+                    // Add email content toggle functionality
+                    const emailToggle = card.querySelector('.email-toggle');
+                    const emailContent = card.querySelector('.email-content');
+                    emailToggle.addEventListener('click', () => {
+                        const isHidden = emailContent.style.display === 'none';
+                        emailContent.style.display = isHidden ? 'block' : 'none';
+                        emailToggle.textContent = isHidden ? 'Hide Email Content' : 'Show Email Content';
+                    });
+
+                    resultsContainer.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message || 'An error occurred while analyzing emails');
+            } finally {
+                loading.style.display = 'none';
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
